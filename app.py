@@ -15,7 +15,20 @@ class DesktopPet(QWidget):
         self.setAttribute(Qt.WA_TranslucentBackground, True)
 
         # 設置圖片
-        self.pet_images = [QPixmap(f"./frames/walk/frame_{i:04d}.png") for i in range(0, 5)]
+        scale_factor = 0.1
+        self.pet_images = []
+        for i in range(1,4):
+            pixmap = QPixmap(f"./frames/walk/{i:01d}.png")
+            if pixmap.isNull():
+                print(f"Warning: Failed to load image ./frames/walk/{i:01d}.png")
+            scaled = pixmap.scaled(
+                pixmap.width() * scale_factor,
+                pixmap.height() * scale_factor,
+                Qt.KeepAspectRatio,
+                Qt.SmoothTransformation
+            )
+            self.pet_images.append(scaled)
+            
         self.current_frame = 0
 
         # 顯示圖片
@@ -49,4 +62,4 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     pet = DesktopPet()
     pet.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
