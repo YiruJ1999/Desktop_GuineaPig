@@ -97,6 +97,9 @@ class DesktopPet(QWidget):
             print("移动结束")
             self.status = 'sleep'
             self.loadImages(self.status)
+            # 根据方向翻转图像
+            if self.direction == 'right':
+                self.flipImages()
             return
 
         x = self.x()
@@ -137,6 +140,11 @@ class DesktopPet(QWidget):
                 # 切换为 walk
                 self.status = 'walk'
                 self.loadImages(self.status)
+                
+                # 根据方向翻转图像
+                if self.direction == 'right':
+                    self.flipImages()
+                
                 self.current_frame = 0
 
                 # 加快动画
@@ -149,7 +157,7 @@ class DesktopPet(QWidget):
                 self.move_timer.start(10)
 
                 # 初始向左走
-                self.direction = 'left'
+                # self.direction = 'left'
 
             self.drag_position = event.globalPos() - self.frameGeometry().topLeft()
 
