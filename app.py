@@ -15,7 +15,7 @@ class DesktopPet(QWidget):
         self.setAttribute(Qt.WA_TranslucentBackground, True)
 
         # 設置圖片
-        self.pet_images = [QPixmap(f"./default_frames/frame_{i:04d}.png") for i in range(0, 5)]
+        self.pet_images = [QPixmap(f"./frames/walk/frame_{i:04d}.png") for i in range(0, 5)]
         self.current_frame = 0
 
         # 顯示圖片
