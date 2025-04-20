@@ -1,5 +1,7 @@
 import sys
 import os
+
+import numpy as np
 from PySide6.QtCore import Qt, QTimer, QPoint
 from PySide6.QtGui import QPixmap, QTransform
 from PySide6.QtWidgets import QApplication, QWidget, QLabel
@@ -19,6 +21,8 @@ class DesktopPet(QWidget):
 
         # 默认状态是 sleep
         self.status = 'sleep'
+
+        # 读取图片
         self.pet_images = []
         self.loadImages(self.status)
 
@@ -34,9 +38,8 @@ class DesktopPet(QWidget):
         self.animation_timer.timeout.connect(self.updateAnimation)
         self.animation_timer.start(300)  # 睡觉动画速度
 
-        # 移动定时器
-        self.move_timer = QTimer(self)
-        self.move_timer.timeout.connect(self.autoMove)
+        # 移动计数器
+        self.move_counter = 0
 
         # 初始放在屏幕右边
         screen = QApplication.primaryScreen()
@@ -74,11 +77,28 @@ class DesktopPet(QWidget):
         """更新当前的动画帧"""
         if not self.pet_images:
             return
+        #self.loadImages(self.status)
+        if self.status == 'sleep':
+            self.animation_timer.start(300)
+        elif self.status == 'walk':
+            self.animation_timer.start(200)
+
+
         self.current_frame = (self.current_frame + 1) % len(self.pet_images)
         self.label.setPixmap(self.pet_images[self.current_frame])
 
     def autoMove(self):
         """控制宠物移动"""
+        self.move_counter += 1
+
+        if self.move_counter >= self.max_moves:
+            self.move_timer.stop()
+            self.move_counter = 0  # 可选：重置计数
+            print("移动结束")
+            self.status = 'sleep'
+            self.loadImages(self.status)
+            return
+
         x = self.x()
         y = self.y()
         step = 5
@@ -123,7 +143,10 @@ class DesktopPet(QWidget):
                 self.animation_timer.setInterval(100)
 
                 # 启动移动
-                self.move_timer.start(50)
+                self.max_moves = np.random.randint(50, 100);
+                self.move_timer = QTimer(self)
+                self.move_timer.timeout.connect(self.autoMove)
+                self.move_timer.start(10)
 
                 # 初始向左走
                 self.direction = 'left'
