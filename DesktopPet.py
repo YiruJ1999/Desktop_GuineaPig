@@ -8,14 +8,11 @@ from PySide6.QtWidgets import QApplication, QWidget, QLabel
 
 class DesktopPet(QWidget):
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent=None):
+        super().__init__(parent)
         self.init()
 
     def init(self):
-        # 设置无边框 & 始终置顶 & 透明背景
-        self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
-        self.setAttribute(Qt.WA_TranslucentBackground, True)
         
         # 所有状态
         self.allStatus = ['sleep', 'walk', 'drag']
@@ -29,6 +26,7 @@ class DesktopPet(QWidget):
         
     def preloadImages(self):
         #预加载所有状态的图片并缓存到字典中
+        self.scaleFactor = 0.1
         self.imageCache = {}
         for status in self.allStatus:
             folderPath = f"./frames/{status}"
@@ -43,7 +41,7 @@ class DesktopPet(QWidget):
                             pixmap.width() * self.scaleFactor,
                             pixmap.height() * self.scaleFactor,
                             Qt.KeepAspectRatio,
-                            Qt.SmoothTransformation
+                             Qt.SmoothTransformation
                         )
                         images.append(scaled)
             self.imageCache[status] = images
@@ -71,13 +69,7 @@ class DesktopPet(QWidget):
         # 移动计数器和拖动初始化
         self.moveCounter = 0
 
-
-        # 初始放在屏幕右边
-        screen = QApplication.primaryScreen()
-        screenGeometry = screen.geometry()
-        self.move(screenGeometry.width() - self.width(), 300)
-        self.dragPosition = QPoint()
-
+    
     def flipImages(self):
         """翻转图片，模拟掉头效果"""
         flippedImages = []
@@ -95,12 +87,14 @@ class DesktopPet(QWidget):
         if self.status == 'sleep':
             self.petWalk(self.direction, speed=5)
         self.dragPosition = event.globalPos() - self.frameGeometry().topLeft()
+        
     def mouseMoveEvent(self, event):
         # 拖动窗口事件，触发petDrag
             if event.buttons() == Qt.LeftButton:
                 #self.petDrag()
                 self.move(event.globalPos() - self.dragPosition)
-        # Status
+    
+    # Status
     def petWalk(self, direction, speed):
         self.status = 'walk'
         self.direction = direction
@@ -168,7 +162,6 @@ class DesktopPet(QWidget):
         if not self.currentAnimation :
             return
 
-
         if self.status == 'sleep':
             self.animationTimer.start(300)
         elif self.status == 'walk':
@@ -178,12 +171,3 @@ class DesktopPet(QWidget):
         self.label.setPixmap(self.currentAnimation[self.currentFrame])
 
 
-
-
-
-
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    pet = DesktopPet()
-    pet.show()
-    sys.exit(app.exec())
