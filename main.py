@@ -15,19 +15,19 @@ class MainWindow(QWidget):
 
     def setupWindow(self):
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool)
-        self.setAttribute(Qt.WA_TranslucentBackground)
+        self.setAttribute(Qt.WA_TranslucentBackground, False)
         self.setFixedHeight(self.fixedHeight)
 
         screen = QGuiApplication.primaryScreen().geometry()
         screen_width = screen.width()
         screen_height = screen.height()
 
-        self.setGeometry(0, screen_height - self.fixedHeight, screen_width, self.fixedHeight)
+        self.setGeometry(0, screen_height - self.fixedHeight - 30, screen_width, self.fixedHeight)
 
     def loadComponents(self):
         # 只给 DesktopPet 用 layout
         self.desktopPet = DesktopPet(self)
-        self.desktopPet.setGeometry(0, 0, self.width(), self.fixedHeight)  # 占据整个底部区域
+        #self.desktopPet.setGeometry(0, 0, self.width(), self.fixedHeight)  # 占据整个底部区域
         self.desktopPet.raise_()  
 
     def addCloseButton(self):

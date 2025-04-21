@@ -15,7 +15,7 @@ class DesktopPet(QWidget):
     def init(self):
         
         # 所有状态
-        self.allStatus = ['sleep', 'walk', 'drag']
+        self.allStatus = ['sleep', 'walk', 'drag','sleepwalk','walksleep']
         
         # 缩放比例，预读取图片
         self.scaleFactor = 0.1
@@ -23,34 +23,56 @@ class DesktopPet(QWidget):
         
         # 设定初始状态
         self.initState()
-        
+
     def preloadImages(self):
-        #预加载所有状态的图片并缓存到字典中
+
         self.scaleFactor = 0.1
         self.imageCache = {}
+
         for status in self.allStatus:
             folderPath = f"./frames/{status}"
-            images = []
+            images_left = []
+            images_right = []
+
             if os.path.exists(folderPath):
                 for filename in sorted(os.listdir(folderPath)):
                     if filename.endswith(".png"):
                         pixmap = QPixmap(os.path.join(folderPath, filename))
                         if pixmap.isNull():
                             continue
+
+                        # 缩放原图（向左）
                         scaled = pixmap.scaled(
                             pixmap.width() * self.scaleFactor,
                             pixmap.height() * self.scaleFactor,
                             Qt.KeepAspectRatio,
-                             Qt.SmoothTransformation
+                            Qt.SmoothTransformation
                         )
-                        images.append(scaled)
-            self.imageCache[status] = images
+                        images_left.append(scaled)
+
+                        # 水平翻转生成向右图片
+                        flipped = scaled.transformed(QTransform().scale(-1, 1))
+                        images_right.append(flipped)
+
+            self.imageCache[f"{status}_l"] = images_left
+            self.imageCache[f"{status}_r"] = images_right
+
+    def loadImage(self):
+        if self.direction < 0 :
+            self.currentAnimation = self.imageCache[f"{self.status}_l"]
+        else:
+            self.currentAnimation = self.imageCache[f"{self.status}_r"]
+
 
     def initState(self):
+        # 默认值
+        self.defaultSpeed = 5
+
         # 初始状态：速度，睡觉，向左
-        self.speed = 1
+        self.speed = self.defaultSpeed
         self.direction = -1  # 提前设定方向
-        
+
+
         # 初始化 label 和动画定时器
         self.label = QLabel(self)
         self.animationTimer = QTimer(self)
@@ -61,7 +83,7 @@ class DesktopPet(QWidget):
         self.petSleep(direction=self.direction)
 
         # 设置窗口尺寸
-        self.currentAnimation = self.imageCache[self.status]
+        self.loadImage()
         self.currentFrame = 0
         self.label.resize(self.currentAnimation[self.currentFrame].size())
         self.resize(self.currentAnimation[self.currentFrame].size())
@@ -69,7 +91,6 @@ class DesktopPet(QWidget):
         # 移动计数器和拖动初始化
         self.moveCounter = 0
 
-    
     def flipImages(self):
         """翻转图片，模拟掉头效果"""
         flippedImages = []
@@ -79,13 +100,12 @@ class DesktopPet(QWidget):
             flippedImages.append(flippedImg)
         self.currentAnimation = flippedImages
         self.currentFrame = 0  # 重置帧数
-        
 
     # Events
     def mousePressEvent(self, event):
         # 鼠标点击事件，触发petWalk
         if self.status == 'sleep':
-            self.petWalk(self.direction, speed=5)
+            self.petSleepWalk(self.direction, speed=5)
         self.dragPosition = event.globalPos() - self.frameGeometry().topLeft()
         
     def mouseMoveEvent(self, event):
@@ -100,10 +120,8 @@ class DesktopPet(QWidget):
         self.direction = direction
         self.speed = speed
 
-         # 加载图片并根据方向翻转
-        self.currentAnimation = self.imageCache[self.status]
-        if self.direction == 1:
-            self.flipImages()
+         # 加载图片
+        self.loadImage()
 
         # 初始化移动控制
         self.maxMoves = np.random.randint(50, 100)
@@ -120,7 +138,7 @@ class DesktopPet(QWidget):
 
             if self.moveCounter >= self.maxMoves:
                 self.moveTimer.stop()
-                self.petSleep(direction=self.direction)
+                self.petWalkSleep(direction=self.direction)
                 return
 
             x = self.x()
@@ -131,10 +149,11 @@ class DesktopPet(QWidget):
 
             if self.direction == -1:
                 new_x = x - step
-                if new_x <= 0:
+                if new_x < 0:
                     new_x = 0
                     self.direction = 1
                     self.flipImages()
+
             else:
                 new_x = x + step
                 if new_x + self.width() >= screenWidth:
@@ -144,16 +163,33 @@ class DesktopPet(QWidget):
 
             self.move(new_x, y)
 
+
         self.moveTimer.timeout.connect(autoMove)
         self.moveTimer.start(10)
         return
 
+    def petWalkSleep(self,direction):
+        self.status = 'walksleep'
+        # 加载图片
+        self.loadImage()
+
+        self.currentFrame = 0
+
+    def petSleepWalk(self,direction,speed):
+        self.status = 'sleepwalk'
+        self.speed = speed
+        # 加载图片
+        self.loadImage()
+        self.currentFrame = 0
 
     def petSleep(self, direction):
         self.status = 'sleep'
-        self.currentAnimation = self.imageCache[self.status]
+        # 加载图片
+        print(self.direction)
+        self.loadImage()
         self.direction = direction
         return
+
     def petDrag(self):
         return
 
@@ -169,5 +205,16 @@ class DesktopPet(QWidget):
 
         self.currentFrame = (self.currentFrame + 1) % len(self.currentAnimation)
         self.label.setPixmap(self.currentAnimation[self.currentFrame])
+
+        if self.currentFrame+1 >= len(self.currentAnimation):
+            self.onAnimationFinished()
+
+    def onAnimationFinished(self):
+        if self.status == 'sleepwalk':
+            self.petWalk(self.direction, self.speed)
+        elif self.status == 'walksleep':
+            self.petSleep(self.direction)
+
+
 
 
