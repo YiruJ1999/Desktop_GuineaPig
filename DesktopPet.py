@@ -15,8 +15,13 @@ class DesktopPet(QWidget):
     def init(self):
         
         # 所有状态
-        self.allStatus = ['sleep', 'walk', 'drag','sleepwalk','walksleep']
-        
+        self.allStatus = ['idle','sleep', 'walk', 'drag','sleepwalk','walksleep']
+        self.animationInterval = {'idle':100, 
+                                  'sleep':300,
+                                    'walk':50, 
+                                    'drag':100,
+                                    'sleepwalk':100,
+                                    'walksleep':100}
         # 缩放比例，预读取图片
         self.scaleFactor = 0.1
         self.preloadImages()
@@ -79,8 +84,8 @@ class DesktopPet(QWidget):
         self.animationTimer.timeout.connect(self.updateAnimation)
         self.animationTimer.start(300) #初始interval不影响动画播放
 
-        # 设置初始状态为 sleep
-        self.petSleep(direction=self.direction)
+        # 设置初始状态为 idle
+        self.petIdle()
 
         # 设置窗口尺寸
         self.loadImage()
@@ -90,6 +95,7 @@ class DesktopPet(QWidget):
 
         # 移动计数器和拖动初始化
         self.moveCounter = 0
+        self.idleIntervalCounter = 0
 
     def flipImages(self):
         """翻转图片，模拟掉头效果"""
@@ -106,9 +112,12 @@ class DesktopPet(QWidget):
         # 鼠标点击事件，触发petWalk
         if self.status == 'sleep':
             self.petSleepWalk(self.direction, speed=5)
+        elif self.status == 'idle' or self.status == 'drag':
+            self.petWalk(self.direction,speed=5)
         self.dragPosition = event.globalPos() - self.frameGeometry().topLeft()
 
     def mousePressEvent(self, event):
+        self.petDrag()
         self.dragPosition = event.globalPos() - self.frameGeometry().topLeft()
 
     def mouseMoveEvent(self, event):
@@ -118,7 +127,7 @@ class DesktopPet(QWidget):
                 self.move(event.globalPos() - self.dragPosition)
     
     # Status
-    def petWalk(self, direction, speed):
+    def petWalk(self, direction, speed, nextStatus = 'idle'):
         self.status = 'walk'
         self.direction = direction
         self.speed = speed
@@ -141,7 +150,7 @@ class DesktopPet(QWidget):
 
             if self.moveCounter >= self.maxMoves:
                 self.moveTimer.stop()
-                self.petWalkSleep(direction=self.direction)
+                self.petIdle()
                 return
 
             x = self.x()
@@ -185,16 +194,44 @@ class DesktopPet(QWidget):
         self.loadImage()
         self.currentFrame = 0
 
-    def petSleep(self, direction):
+    def petSleep(self):
         self.status = 'sleep'
         # 加载图片
         self.loadImage()
-        self.direction = direction
-        
-        return
+
 
     def petDrag(self):
+        self.status = 'drag'
+        # 加载图片
+        self.loadImage()
         return
+
+    def petIdle(self):
+        self.status = 'idle'
+        self.animationTimer.start()
+        self.loadImage()
+
+        # idle 计时
+        idleTimerInterval = 10 # milisecond
+        idleTimeMax = np.random.randint(500,1000)
+        idleIntervalMax = idleTimeMax / idleTimerInterval
+        
+        def callbackIdleTimer():
+            self.idleIntervalCounter = self.idleIntervalCounter + 1
+            if self.idleIntervalCounter > idleIntervalMax:
+                self.petWalkSleep(direction=self.direction)
+                self.idleIntervalCounter = 0
+                idleTimer.stop()
+
+        idleTimer = QTimer()
+        idleTimer.timeout.connect(callbackIdleTimer)
+        idleTimer.start(idleTimerInterval)
+
+        
+
+
+            
+
 
 
     def petTurn(self):
@@ -206,15 +243,8 @@ class DesktopPet(QWidget):
     def updateAnimation(self):
         if not self.currentAnimation :
             return
-
-        if self.status == 'sleep':
-            self.animationTimer.start(300)
-        elif self.status == 'walk':
-            self.animationTimer.start(100)
-        elif self.status == 'walksleep':
-            self.animationTimer.start(100)            
-        elif self.status == 'sleepwalk':
-            self.animationTimer.start(100)
+        
+        self.animationTimer.start(self.animationInterval[self.status])
 
         self.currentFrame = (self.currentFrame + 1) % len(self.currentAnimation)
         self.label.setPixmap(self.currentAnimation[self.currentFrame])
@@ -226,7 +256,7 @@ class DesktopPet(QWidget):
         if self.status == 'sleepwalk':
             self.petWalk(self.direction, self.speed)
         elif self.status == 'walksleep':
-            self.petSleep(self.direction)
+            self.petSleep()
 
 
 
