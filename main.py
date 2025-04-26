@@ -41,7 +41,6 @@ class MainWindow(QWidget):
         new_y = 0
         self.desktopPet.move(new_x, new_y)
         
-        
     def addCloseButton(self):
         # 不放入 layout，而是手动放置
         self.closeBtn = QPushButton("❌", self)

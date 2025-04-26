@@ -102,12 +102,15 @@ class DesktopPet(QWidget):
         self.currentFrame = 0  # 重置帧数
 
     # Events
-    def mousePressEvent(self, event):
+    def mouseReleaseEvent(self, event):
         # 鼠标点击事件，触发petWalk
         if self.status == 'sleep':
             self.petSleepWalk(self.direction, speed=5)
         self.dragPosition = event.globalPos() - self.frameGeometry().topLeft()
-        
+
+    def mousePressEvent(self, event):
+        self.dragPosition = event.globalPos() - self.frameGeometry().topLeft()
+
     def mouseMoveEvent(self, event):
         # 拖动窗口事件，触发petDrag
             if event.buttons() == Qt.LeftButton:
@@ -151,15 +154,15 @@ class DesktopPet(QWidget):
                 new_x = x - step
                 if new_x < 0:
                     new_x = 0
-                    self.direction = 1
-                    self.flipImages()
+                    self.petTurn()
+
 
             else:
                 new_x = x + step
                 if new_x + self.width() >= screenWidth:
                     new_x = screenWidth - self.width()
-                    self.direction = -1
-                    self.flipImages()
+                    self.petTurn()
+
 
             self.move(new_x, y)
 
@@ -185,13 +188,19 @@ class DesktopPet(QWidget):
     def petSleep(self, direction):
         self.status = 'sleep'
         # 加载图片
-        print(self.direction)
         self.loadImage()
         self.direction = direction
+        
         return
 
     def petDrag(self):
         return
+
+
+    def petTurn(self):
+        self.flipImages()
+        self.animationTimer.start(1)
+        self.direction = -self.direction
 
     # Animation
     def updateAnimation(self):
@@ -201,6 +210,10 @@ class DesktopPet(QWidget):
         if self.status == 'sleep':
             self.animationTimer.start(300)
         elif self.status == 'walk':
+            self.animationTimer.start(100)
+        elif self.status == 'walksleep':
+            self.animationTimer.start(100)            
+        elif self.status == 'sleepwalk':
             self.animationTimer.start(100)
 
         self.currentFrame = (self.currentFrame + 1) % len(self.currentAnimation)
