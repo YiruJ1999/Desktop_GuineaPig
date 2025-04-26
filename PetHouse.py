@@ -15,11 +15,11 @@ class PetHouse(QWidget):
         # 主房子层
         self.main_layer = QLabel(self)
         self.main_layer.setGeometry(0, 0, width, height)
+        self.main_layer.raise_()
 
         # 阴影层（在主房子上面）
         self.shadow_layer = QLabel(self)
         self.shadow_layer.setGeometry(0, 0, width, height)
-        self.shadow_layer.raise_()
 
         # 加载PNG图像
         image_path = os.path.join(os.path.dirname(__file__), 'componentsPic', 'petHouse.png')

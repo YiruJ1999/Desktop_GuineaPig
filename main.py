@@ -3,6 +3,7 @@ from PySide6.QtCore import Qt, QRect, QTimer, QPoint
 from PySide6.QtGui import QGuiApplication
 from DesktopPet import DesktopPet
 from PetHouse import PetHouse
+from Carpet import Carpet
 import sys
 
 class MainWindow(QWidget):
@@ -12,7 +13,7 @@ class MainWindow(QWidget):
         self.setupWindow()
         self.loadComponents()
         self.addCloseButton()
-        self.startCollisionDetection()
+        #self.startCollisionDetection() #荷兰猪进屋睡觉交互
 
     def setupWindow(self):
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool)
@@ -35,7 +36,11 @@ class MainWindow(QWidget):
         #加载猪窝
         self.petHouse = PetHouse(200, 150, x=self.width()-200, y=0,parent=self)
         self.petHouse.show()
-        self.petHouse.lower()  # 房子放在Pet下面（因为Pet要部分在房子后面）
+        self.petHouse.lower()  
+        
+        # 加载地毯
+        self.carpet = Carpet(self.width(), 150, 0, 0, parent=self)
+        self.carpet.lower()
         
     def initPetPosition(self):
         pet_width = self.desktopPet.width()
