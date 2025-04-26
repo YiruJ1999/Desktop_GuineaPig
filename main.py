@@ -27,9 +27,21 @@ class MainWindow(QWidget):
     def loadComponents(self):
         # 只给 DesktopPet 用 layout
         self.desktopPet = DesktopPet(self)
-        #self.desktopPet.setGeometry(0, 0, self.width(), self.fixedHeight)  # 占据整个底部区域
-        self.desktopPet.raise_()  
-
+        self.desktopPet.setFixedSize(self.desktopPet.label.size())
+        self.desktopPet.raise_() 
+        self.initPetPosition() 
+        
+    def initPetPosition(self):
+        pet_width = self.desktopPet.width()
+        pet_height = self.desktopPet.height()
+        window_width = self.width()
+        window_height = self.height()
+        # 计算初始宠物生成位置
+        new_x = (window_width - pet_width) // 1
+        new_y = 0
+        self.desktopPet.move(new_x, new_y)
+        
+        
     def addCloseButton(self):
         # 不放入 layout，而是手动放置
         self.closeBtn = QPushButton("❌", self)
