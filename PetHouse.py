@@ -22,19 +22,21 @@ class PetHouse(QWidget):
         self.shadow_layer.setGeometry(0, 0, width, height)
 
         # 加载PNG图像
-        image_path = os.path.join(os.path.dirname(__file__), 'componentsPic', 'petHouse.png')
-        self.house_pixmap = QPixmap(image_path).scaled(self.width, self.height)
+        image_path = os.path.join(os.path.dirname(__file__), 'frames\\house\\')
+        self.layers = []
+        self.layers.append(QPixmap(image_path + 'back').scaled(self.width, self.height))
+        self.layers.append(QPixmap(image_path + 'front').scaled(self.width, self.height))
 
     def paintEvent(self, event):
         painter = QPainter(self)
         # 绘制PNG图像作为房子外观
-        if not self.house_pixmap.isNull():
-            painter.drawPixmap(0, 0, self.house_pixmap)
+        for pixmap in self.layers:
+            painter.drawPixmap(0, 0, pixmap)
 
         # 画阴影层 (可选，保持半透明遮罩)
-        painter.setBrush(QColor(50, 50, 50, 100))
-        painter.setPen(QColor(50, 50, 50, 100))
-        painter.drawRect(QRect(0, int(self.height * 0.7), self.width, int(self.height * 0.3)))
+        #painter.setBrush(QColor(50, 50, 50, 100))
+        #painter.setPen(QColor(50, 50, 50, 100))
+        #painter.drawRect(QRect(0, int(self.height * 0.7), self.width, int(self.height * 0.3)))
 
 
     

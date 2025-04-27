@@ -34,7 +34,7 @@ class MainWindow(QWidget):
         self.initPetPosition() 
         
         #加载猪窝
-        self.petHouse = PetHouse(200, 150, x=self.width()-200, y=0,parent=self)
+        self.petHouse = PetHouse(200, 230, x=self.width()-200, y=-10,parent=self)
         self.petHouse.show()
         self.petHouse.lower()  
         
