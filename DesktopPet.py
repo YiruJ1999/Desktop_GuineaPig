@@ -15,11 +15,12 @@ class DesktopPet(QWidget):
     def init(self):
         
         # 所有状态
-        self.allStatus = ['idle','sleep', 'walk', 'drag','sleepwalk','walksleep']
+        self.allStatus = ['idle','sleep', 'walk', 'drag', 'fall', 'sleepwalk', 'walksleep']
         self.animationInterval = {'idle':100, 
                                   'sleep':300,
                                     'walk':50, 
                                     'drag':100,
+                                    'fall':50,
                                     'sleepwalk':100,
                                     'walksleep':100}
         # 缩放比例，预读取图片
@@ -98,7 +99,7 @@ class DesktopPet(QWidget):
         self.idleIntervalCounter = 0
 
     def flipImages(self):
-        """翻转图片，模拟掉头效果"""
+        # 翻转图片，模拟掉头效果
         flippedImages = []
         for img in self.currentAnimation:
             transform = QTransform().scale(-1, 1)  # 水平翻转
@@ -110,11 +111,14 @@ class DesktopPet(QWidget):
     # Events
     def mouseReleaseEvent(self, event):
         # 鼠标点击事件，触发petWalk
-        if self.status == 'sleep':
+        if self.status == 'drag':
+            #self.releaseMouse()
+            self.petFall()
+        elif self.status == 'sleep':
             self.petSleepWalk(self.direction, speed=5)
-        elif self.status == 'idle' or self.status == 'drag':
-            self.petWalk(self.direction,speed=5)
-        # self.dragPosition = event.globalPos() - self.frameGeometry().topLeft()
+        elif self.status == 'idle':
+            self.petWalk(self.direction, speed=5)
+
 
     def mousePressEvent(self, event):
         # 点击记录dragPosition
@@ -211,7 +215,6 @@ class DesktopPet(QWidget):
         self.status = 'idle'
         self.animationTimer.start()
         self.loadImage()
-
         # idle 计时
         idleTimerInterval = 10 # milisecond
         idleTimeMax = np.random.randint(500,1000)
@@ -228,10 +231,46 @@ class DesktopPet(QWidget):
         idleTimer.timeout.connect(callbackIdleTimer)
         idleTimer.start(idleTimerInterval)
 
-        
+    def petFall(self):
 
+        self.status = 'fall'
+        self.loadImage()
+        self.currentFrame = 0
 
+        # 自由落体参数
+        self.fallSpeed = 0
+        self.gravity = 1.2
+
+        # 屏幕底部位置
+        self.floorY =  -10       
+        self.hasLanded = False
+
+        if hasattr(self, 'fallTimer') and self.fallTimer.isActive():
+            self.fallTimer.stop()
+
+        self.fallTimer = QTimer(self)
+
+        def fallStep():
+            if self.hasLanded:
+                return
             
+            self.fallSpeed += self.gravity
+            new_y = self.y() + self.fallSpeed
+
+            if new_y >= self.floorY:
+                new_y = self.floorY
+                self.move(self.x(), new_y)
+                self.hasLanded = True
+                self.fallSpeed = 0 
+                self.fallTimer.stop()
+                self.petIdle()
+            else:
+                self.move(self.x(), new_y)
+            print(new_y)
+        self.fallTimer.timeout.connect(fallStep)
+        self.fallTimer.start(30)
+
+
 
 
 
@@ -242,16 +281,16 @@ class DesktopPet(QWidget):
 
     # Animation
     def updateAnimation(self):
-        if not self.currentAnimation :
+        if not self.currentAnimation:
             return
-        
-        self.animationTimer.start(self.animationInterval[self.status])
-
+        if self.status != 'fall':
+            self.animationTimer.start(self.animationInterval.get(self.status, 100))
         self.currentFrame = (self.currentFrame + 1) % len(self.currentAnimation)
         self.label.setPixmap(self.currentAnimation[self.currentFrame])
 
-        if self.currentFrame+1 >= len(self.currentAnimation):
+        if self.currentFrame + 1 >= len(self.currentAnimation):
             self.onAnimationFinished()
+
 
     def onAnimationFinished(self):
         if self.status == 'sleepwalk':
