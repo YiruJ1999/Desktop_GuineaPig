@@ -76,7 +76,7 @@ class DesktopPet(QWidget):
         # 初始状态：速度，睡觉，向左
         self.speed = self.defaultSpeed
         self.direction = -1  # 提前设定方向
-
+        self.dragPosition = 0
 
         # 初始化 label 和动画定时器
         self.label = QLabel(self)
@@ -114,17 +114,18 @@ class DesktopPet(QWidget):
             self.petSleepWalk(self.direction, speed=5)
         elif self.status == 'idle' or self.status == 'drag':
             self.petWalk(self.direction,speed=5)
-        self.dragPosition = event.globalPos() - self.frameGeometry().topLeft()
+        # self.dragPosition = event.globalPos() - self.frameGeometry().topLeft()
 
     def mousePressEvent(self, event):
-        self.petDrag()
-        self.dragPosition = event.globalPos() - self.frameGeometry().topLeft()
+        # 点击记录dragPosition
+        if event.button() == Qt.LeftButton:
+            self.dragPosition = event.globalPos() - self.frameGeometry().topLeft()
 
     def mouseMoveEvent(self, event):
         # 拖动窗口事件，触发petDrag
-            if event.buttons() == Qt.LeftButton:
-                #self.petDrag()
-                self.move(event.globalPos() - self.dragPosition)
+        if event.buttons() == Qt.LeftButton:
+            self.petDrag()
+            self.move(event.globalPos() - self.dragPosition)
     
     # Status
     def petWalk(self, direction, speed, nextStatus = 'idle'):
