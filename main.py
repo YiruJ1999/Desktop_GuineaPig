@@ -2,6 +2,7 @@ from PySide6.QtWidgets import QApplication, QWidget, QHBoxLayout, QPushButton
 from PySide6.QtCore import Qt, QRect, QTimer, QPoint
 from PySide6.QtGui import QGuiApplication
 from DesktopPet import DesktopPet
+from PoopWidget import PoopWidget
 from PetHouse import PetHouse
 from Carpet import Carpet
 
@@ -15,6 +16,21 @@ class MainWindow(QWidget):
         self.loadComponents()
         self.addCloseButton()
         #self.startCollisionDetection() #荷兰猪进屋睡觉交互
+
+        self.poops = []
+
+        queryTimer50ms = QTimer(self)
+        queryTimer50ms.timeout.connect(self.query50ms)
+        queryTimer50ms.start(50)
+
+    def query50ms(self):
+        if self.desktopPet.wantToPoop == True:
+            poop = PoopWidget(self,
+                x=self.desktopPet.x() + self.desktopPet.width() // 2,
+                y=self.desktopPet.y() + self.desktopPet.height() // 2 )
+            self.desktopPet.wantToPoop = False
+            
+            self.poops.append(poop)
 
     def setupWindow(self):
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool)
