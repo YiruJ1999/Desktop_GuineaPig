@@ -6,6 +6,9 @@ from PySide6.QtCore import Qt, QTimer, QPoint
 from PySide6.QtGui import QPixmap, QTransform
 from PySide6.QtWidgets import QApplication, QWidget, QLabel
 
+from PoopWidget import PoopWidget
+
+
 class DesktopPet(QWidget):
 
     def __init__(self, parent=None):
@@ -15,12 +18,13 @@ class DesktopPet(QWidget):
     def init(self):
         
         # 所有状态
-        self.allStatus = ['idle','sleep', 'walk', 'drag', 'fall', 'sleepwalk', 'walksleep']
+        self.allStatus = ['idle','sleep', 'walk', 'drag', 'fall', 'poop', 'sleepwalk', 'walksleep']
         self.animationInterval = {'idle':100, 
                                   'sleep':300,
                                     'walk':50, 
                                     'drag':100,
                                     'fall':50,
+                                    'poop': 200,
                                     'sleepwalk':100,
                                     'walksleep':100}
         # 缩放比例，预读取图片
@@ -78,6 +82,8 @@ class DesktopPet(QWidget):
         self.speed = self.defaultSpeed
         self.direction = -1  # 提前设定方向
         self.dragPosition = 0
+        self.poopLabels = []
+
 
         # 初始化 label 和动画定时器
         self.label = QLabel(self)
@@ -132,19 +138,17 @@ class DesktopPet(QWidget):
             self.move(event.globalPos() - self.dragPosition)
     
     # Status
-    def petWalk(self, direction, speed, nextStatus = 'idle'):
+    def petWalk(self, direction, speed, nextStatus='idle'):
         self.status = 'walk'
         self.direction = direction
         self.speed = speed
 
-         # 加载图片
+        # 加载walk的图片
         self.loadImage()
 
-        # 初始化移动控制
         self.maxMoves = np.random.randint(50, 100)
         self.moveCounter = 0
 
-        # 停止之前的移动定时器（如果存在）
         if hasattr(self, 'moveTimer') and self.moveTimer.isActive():
             self.moveTimer.stop()
 
@@ -153,6 +157,14 @@ class DesktopPet(QWidget):
         def autoMove():
             self.moveCounter += 1
 
+            if np.random.rand() < 0.05:  # 概率
+                poop = PoopWidget(
+                    x=self.x() + self.width() // 2,
+                    y=1000
+                )
+                self.poopLabels.append(poop)
+
+            # 正常移动逻辑
             if self.moveCounter >= self.maxMoves:
                 self.moveTimer.stop()
                 self.petIdle()
@@ -169,21 +181,18 @@ class DesktopPet(QWidget):
                 if new_x < 0:
                     new_x = 0
                     self.petTurn()
-
-
             else:
                 new_x = x + step
                 if new_x + self.width() >= screenWidth:
                     new_x = screenWidth - self.width()
                     self.petTurn()
 
-
             self.move(new_x, y)
-
 
         self.moveTimer.timeout.connect(autoMove)
         self.moveTimer.start(10)
-        return
+
+
 
     def petWalkSleep(self,direction):
         self.status = 'walksleep'
@@ -271,6 +280,19 @@ class DesktopPet(QWidget):
         self.fallTimer.start(30)
 
 
+    def petPoop(self):
+        self.status = 'poop'
+        self.loadImage()
+        self.currentFrame = 0
+
+        # 创建新的Poop组件
+        poop = PoopWidget(
+            parent=self.window(), 
+            x=self.x() + self.width() // 2,
+            y=self.y() + self.height() - 10
+        )
+
+        self.poopLabels.append(poop)
 
 
 
@@ -297,7 +319,8 @@ class DesktopPet(QWidget):
             self.petWalk(self.direction, self.speed)
         elif self.status == 'walksleep':
             self.petSleep()
-
+        elif self.status == 'poop':
+            self.petWalk(self.direction, self.speed)
 
 
 

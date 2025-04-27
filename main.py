@@ -4,6 +4,7 @@ from PySide6.QtGui import QGuiApplication
 from DesktopPet import DesktopPet
 from PetHouse import PetHouse
 from Carpet import Carpet
+
 import sys
 
 class MainWindow(QWidget):
@@ -41,7 +42,7 @@ class MainWindow(QWidget):
         # 加载地毯
         self.carpet = Carpet(self.width(), 150, 0, 0, parent=self)
         self.carpet.lower()
-        
+
     def initPetPosition(self):
         pet_width = self.desktopPet.width()
         pet_height = self.desktopPet.height()
