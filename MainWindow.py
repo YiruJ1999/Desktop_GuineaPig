@@ -1,8 +1,12 @@
 from PySide6.QtWidgets import QWidget, QPushButton, QApplication
 from PySide6.QtCore import Qt, QRect, QTimer
-from PySide6.QtGui import QGuiApplication
+from PySide6.QtGui import QGuiApplication, QPixmap
+
+import os
+
 from DesktopPet import DesktopPet
 from PoopWidget import PoopWidget
+from PoopManager import PoopManager
 from PetHouse import PetHouse
 from Carpet import Carpet
 
@@ -12,23 +16,24 @@ class MainWindow(QWidget):
         self.fixedHeight = 150
         self.setupWindow()
         self.loadComponents()
+        self.poopManager = PoopManager(self)
+        
         self.addCloseButton()
-        #self.startCollisionDetection() #荷兰猪进屋睡觉交互
-
-        self.poops = []
-
+        self.addClearPoopButton()
+        
         queryTimer50ms = QTimer(self)
         queryTimer50ms.timeout.connect(self.query50ms)
         queryTimer50ms.start(50)
 
     def query50ms(self):
-        if self.desktopPet.wantToPoop == True:
-            poop = PoopWidget(self,
-                x=self.desktopPet.x() + self.desktopPet.width() // 2,
-                y=self.desktopPet.y() + self.desktopPet.height() // 2 )
+        if self.desktopPet.wantToPoop:
+            self.poopManager.addPoop(
+                self.desktopPet.x() + self.desktopPet.width() // 2,
+                self.desktopPet.y() + self.desktopPet.height() // 2
+            )
             self.desktopPet.wantToPoop = False
-            
-            self.poops.append(poop)
+
+
 
     def setupWindow(self):
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool)
@@ -108,3 +113,39 @@ class MainWindow(QWidget):
     def resizeEvent(self, event):
         self.closeBtn.move(self.width() - 40, 10)
         # self.petHouse.move(self.width() - self.petHouse.width(), 0)
+        self.clearPoopBtn.move(10, 10)
+  
+    
+    def addClearPoopButton(self):
+        self.clearPoopBtn = QPushButton(self)
+        poopManagerPath = os.path.join(os.path.dirname(__file__), 'pics', 'poopManager.png')
+        poopManagerPixmap = QPixmap(poopManagerPath)
+
+        if poopManagerPixmap.isNull():
+            print(f"⚠️ 图片加载失败: {poopManagerPath}")
+            self.clearPoopBtn.setText("🧹")
+        else:
+            self.clearPoopBtn.setIcon(poopManagerPixmap)
+            self.clearPoopBtn.setIconSize(poopManagerPixmap.size())
+
+        self.clearPoopBtn.setStyleSheet("""
+            QPushButton {
+                background-color: rgba(255, 255, 255, 180);
+                border: none;
+                border-radius: 8px;
+            }
+            QPushButton:hover {
+                background-color: rgba(0, 128, 0, 180);
+            }
+        """)
+        self.clearPoopBtn.setFixedSize(30, 30)
+        self.clearPoopBtn.move(10, 10)  # 左上角
+        self.clearPoopBtn.raise_()
+        self.clearPoopBtn.clicked.connect(self.poopManager.clearPoops)
+
+        
+        
+    def clearPoops(self):
+        for poop in self.poops:
+            poop.deleteLater()
+        self.poops.clear()
