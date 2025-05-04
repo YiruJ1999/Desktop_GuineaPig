@@ -30,7 +30,6 @@ class DesktopPet(QWidget):
         # 缩放比例，预读取图片
         self.scaleFactor = 0.1
         self.preloadImages()
-        
         # 设定初始状态
         self.initState()
 

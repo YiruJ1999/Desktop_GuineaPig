@@ -1,6 +1,7 @@
 from PySide6.QtWidgets import QWidget, QPushButton, QApplication
 from PySide6.QtCore import Qt, QRect, QTimer
 from PySide6.QtGui import QGuiApplication, QPixmap, QIcon
+import math
 
 import os
 
@@ -22,6 +23,9 @@ class MainWindow(QWidget):
         self.addCloseButton()
         self.addClearPoopButton()
 
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.timerFcn)
+        self.timer.start(50)
 
     def setupWindow(self):
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool)
@@ -47,8 +51,14 @@ class MainWindow(QWidget):
         self.petHouse.lower()  
         
         # 加载地毯
-        self.carpet = Carpet(self.width(), 150, 0, 0, parent=self)
-        self.carpet.lower()
+        carpetSize = 20
+        numCarpet = self.width() // carpetSize + 1
+        self.carpets = []
+        for i in range (numCarpet):
+            self.carpets.append(Carpet(carpetSize,carpetSize,x = i*carpetSize, y = 90  , parent=self)) #self.height() - carpetSize
+            self.carpets[i].show()
+            self.carpets[i].lower()
+    
 
     def initPetPosition(self):
         pet_width = self.desktopPet.width()
@@ -122,8 +132,13 @@ class MainWindow(QWidget):
         self.clearPoopBtn.raise_()
         self.clearPoopBtn.clicked.connect(self.poopManager.clearPoops)
 
-
-        
+    def timerFcn(self):
+        # Pet压Carpet逻辑
+        for carpet in self.carpets:
+            if carpet.x() + carpet.width > self.desktopPet.x() and carpet.x() < self.desktopPet.x() + self.desktopPet.width():
+                carpet.carpetMove(self.desktopPet.direction)
+            else:
+                carpet.carpetMove(0)
         
     def clearPoops(self):
         for poop in self.poops:

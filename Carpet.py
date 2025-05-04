@@ -1,48 +1,54 @@
-from PySide6.QtWidgets import QLabel
+import os
+import numpy as np
+from PySide6.QtWidgets import QLabel,QWidget
 from PySide6.QtGui import QPixmap
-from PySide6.QtCore import QSize, QPoint
+from PySide6.QtCore import Qt, QTimer
 
 
-class Carpet(QLabel):
-    def __init__(self, x=0, y=0, parent=None):
+class Carpet(QWidget):
+    def __init__(self,width = 20, height = 20, x=0, y=0, parent=None):
         super().__init__(parent)
 
-        carpet_image_path = 'frames\carpet\carpet.png'
-        pixmap = QPixmap(carpet_image_path)
+#        carpet_image_path = os.path.join(os.path.dirname(__file__), 'frames\carpet', '2.png')
+#        pixmap = QPixmap(carpet_image_path)
 
         # 设置大小和位置
-        self.setPixmap(pixmap)
-        self.setScaledContents(True)
-        self.resize(width, height)
-        self.move(x, y)
+        #self.setPixmap(pixmap)
+        self.width = width
+        self.height = height
+        self.currentPosition = 2 # currentPosition = 0 ... 4 . 2 = MID
+    
+        #self.allPositions = [mid, left, right, midleft, midright]
+        #self.allStatus = [mid, left, right, midleft, midright, leftmid, rightmid]
 
-        self.allPositions = [mid, left, right, midleft, midright]
-        self.allStatus = [mid, left, right, midleft, midright, leftmid, rightmid]
+        # 导入贴图，设置动画
+        self.preloadImages()
 
         self.label = QLabel(self)
+        self.label.setGeometry(0,0,100,100)
         self.animationTimer = QTimer(self)
         self.animationTimer.timeout.connect(self.updateAnimation)
-        self.animationTimer.start(300)
+        self.animationTimer.start(100)
 
-        self.scaleFactor = scaleFactor
+        self.move(x,y)
 
     def preloadImages(self):
 
-        
         self.images = {}
 
         for status in range(0,5):
-            filename = f"./frames/carpet/{status}.png"
+            folderPath = f"./frames/carpet"
+            filename = f"{status}.png"
 
-            if os.path.exists(filename):
-                pixmap = QPixmap(filename)
+            if os.path.exists(folderPath):
+                pixmap = QPixmap(os.path.join(folderPath, filename))
                 if pixmap.isNull():
                     continue
 
             # 缩放原图
             scaled = pixmap.scaled(
-                pixmap.width() * self.scaleFactor,
-                pixmap.height() * self.scaleFactor,
+                self.width,
+                self.height,
                 Qt.KeepAspectRatio,
                 Qt.SmoothTransformation
             )
@@ -50,9 +56,13 @@ class Carpet(QLabel):
 
 
     def updateAnimation(self):
-        
-        self.label.setPixmap(self.images[2])    
+        self.label.setPixmap(self.images[self.currentPosition])    
 
 
-    def carpetMove(self):
-        return
+    def carpetMove(self,direction):
+        if direction > 0 :
+            self.currentPosition = min(self.currentPosition+1,4) 
+        elif direction < 0:
+            self.currentPosition = max(self.currentPosition-1,0) 
+        elif direction == 0:
+            self.currentPosition = np.sign(2-self.currentPosition) + self.currentPosition
