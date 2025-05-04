@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import QWidget, QPushButton, QApplication
 from PySide6.QtCore import Qt, QRect, QTimer
-from PySide6.QtGui import QGuiApplication, QPixmap
+from PySide6.QtGui import QGuiApplication, QPixmap, QIcon
 
 import os
 
@@ -16,6 +16,7 @@ class MainWindow(QWidget):
         self.fixedHeight = 150
         self.setupWindow()
         self.loadComponents()
+
         self.poopManager = PoopManager(self)
         
         self.addCloseButton()
@@ -28,8 +29,8 @@ class MainWindow(QWidget):
     def query50ms(self):
         if self.desktopPet.wantToPoop:
             self.poopManager.addPoop(
-                self.desktopPet.x() + self.desktopPet.width() // 2,
-                self.desktopPet.y() + self.desktopPet.height() // 2
+                self.desktopPet.x() + self.desktopPet.width() // 2 ,
+                self.desktopPet.y() + self.desktopPet.height() // 2 
             )
             self.desktopPet.wantToPoop = False
 
@@ -118,16 +119,23 @@ class MainWindow(QWidget):
     
     def addClearPoopButton(self):
         self.clearPoopBtn = QPushButton(self)
-        poopManagerPath = os.path.join(os.path.dirname(__file__), 'pics', 'poopManager.png')
+        poopManagerPath = os.path.join(os.path.dirname(__file__), 'componentsPic', 'poopManager.png')
         poopManagerPixmap = QPixmap(poopManagerPath)
 
         if poopManagerPixmap.isNull():
             print(f"⚠️ 图片加载失败: {poopManagerPath}")
             self.clearPoopBtn.setText("🧹")
         else:
-            self.clearPoopBtn.setIcon(poopManagerPixmap)
-            self.clearPoopBtn.setIconSize(poopManagerPixmap.size())
-
+            maxSize = 60
+            scaledPixmap = poopManagerPixmap.scaled(
+                maxSize, maxSize,
+                Qt.KeepAspectRatio,
+                Qt.SmoothTransformation
+            )
+            self.clearPoopBtn.setIcon(QIcon(scaledPixmap))
+            self.clearPoopBtn.setIconSize(scaledPixmap.size())
+            self.clearPoopBtn.setFixedSize(scaledPixmap.size())
+            
         self.clearPoopBtn.setStyleSheet("""
             QPushButton {
                 background-color: rgba(255, 255, 255, 180);
@@ -138,10 +146,11 @@ class MainWindow(QWidget):
                 background-color: rgba(0, 128, 0, 180);
             }
         """)
-        self.clearPoopBtn.setFixedSize(30, 30)
+
         self.clearPoopBtn.move(10, 10)  # 左上角
         self.clearPoopBtn.raise_()
         self.clearPoopBtn.clicked.connect(self.poopManager.clearPoops)
+
 
         
         

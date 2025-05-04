@@ -189,7 +189,7 @@ class DesktopPet(QWidget):
                     self.petTurn()
 
             self.move(new_x, y)
-            print(y)
+            #print(y)
         self.moveTimer.timeout.connect(autoMove)
         self.moveTimer.start(10)
 
