@@ -20,7 +20,7 @@ class DesktopPet(QWidget):
         # 所有状态
         self.allStatus = ['idle','sleep', 'walk', 'drag', 'fall', 'sleepwalk', 'walksleep','fallidle']
         self.animationInterval = {'idle':100, 
-                                  'sleep':300,
+                                  'sleep':200,
                                     'walk':50, 
                                     'drag':100,
                                     'fall':50,
@@ -73,11 +73,11 @@ class DesktopPet(QWidget):
             self.currentAnimation = self.imageCache[f"{self.status}_l"]
         else:
             self.currentAnimation = self.imageCache[f"{self.status}_r"]
-
+        
         # 立即从头播放当前动画    
         self.currentFrame = 0    
         self.animationTimer.start()
-
+        print(1)
     def initState(self):
         # 默认值
         self.defaultSpeed = 5
@@ -102,10 +102,18 @@ class DesktopPet(QWidget):
         self.currentFrame = 0
         self.label.resize(self.currentAnimation[self.currentFrame].size())
         self.resize(self.currentAnimation[self.currentFrame].size())
+        
+        
 
         # 移动计数器和拖动初始化
         self.moveCounter = 0
         self.idleIntervalCounter = 0
+        
+        self.petOffsetY = int(self.height() * 0.4)  # 40% 为脚下空白区域
+        
+        # 定义小猪图片左上角的坐标范围
+        self.ceilY = - self.petOffsetY
+        self.floorY =  self.parent().height()-self.height()+ self.petOffsetY -10 #10为地毯厚度
 
     def flipImages(self):
         # 翻转图片，模拟掉头效果
@@ -133,13 +141,40 @@ class DesktopPet(QWidget):
         # 点击记录dragPosition
         if event.button() == Qt.LeftButton:
             self.dragPosition = event.globalPos() - self.frameGeometry().topLeft()
+            print("self.frameGeometry().topLeft()",self.frameGeometry().topLeft())
 
     def mouseMoveEvent(self, event):
         # 拖动窗口事件，触发petDrag
         if event.buttons() == Qt.LeftButton:
             if self.status != 'drag':
                 self.petDrag()
-            self.move(event.globalPos() - self.dragPosition)
+
+            parentRect = self.parent().geometry()
+            petWidth = self.width()
+            petHeight = self.height() - self.petOffsetY
+
+            # 鼠标相对于父窗口的坐标
+            mouseX = event.globalPos().x()
+            mouseY = event.globalPos().y()
+
+            newX = mouseX - self.dragPosition.x()
+            newY = mouseY - self.dragPosition.y()
+            
+            # 限制 X
+            if newX < parentRect.left():
+                newX = parentRect.left()
+            elif newX + petWidth > parentRect.right():
+                newX = parentRect.right() - petWidth
+
+            # 限制 Y
+            if newY < self.ceilY:
+                newY = self.ceilY
+            elif newY  > self.floorY:
+                newY = self.floorY
+
+            self.move(newX, newY)
+
+
     
     # Status
     def petWalk(self, direction, speed, nextStatus='idle'):
@@ -249,7 +284,7 @@ class DesktopPet(QWidget):
         self.maxFallSpeed = 5
 
         # 屏幕底部位置
-        self.floorY =  -10       
+               
         self.hasLanded = False
 
         if hasattr(self, 'fallTimer') and self.fallTimer.isActive():
