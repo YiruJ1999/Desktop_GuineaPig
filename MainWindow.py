@@ -17,23 +17,10 @@ class MainWindow(QWidget):
         self.setupWindow()
         self.loadComponents()
 
-        self.poopManager = PoopManager(self)
+        self.poopManager = PoopManager(self, self.desktopPet)
         
         self.addCloseButton()
         self.addClearPoopButton()
-        
-        queryTimer50ms = QTimer(self)
-        queryTimer50ms.timeout.connect(self.query50ms)
-        queryTimer50ms.start(50)
-
-    def query50ms(self):
-        if self.desktopPet.wantToPoop:
-            self.poopManager.addPoop(
-                self.desktopPet.x() + self.desktopPet.width() // 2 ,
-                self.desktopPet.y() + self.desktopPet.height() // 2 
-            )
-            self.desktopPet.wantToPoop = False
-
 
 
     def setupWindow(self):
@@ -73,23 +60,7 @@ class MainWindow(QWidget):
         new_y = 0
         self.desktopPet.move(new_x, new_y)
         
-        
-    def startCollisionDetection(self):
-        # 创建一个定时器，每50ms检测一次
-        self.timer = QTimer(self)
-        self.timer.timeout.connect(self.checkCollision)
-        self.timer.start(50)
-
-    def checkCollision(self):
-        petPos = self.desktopPet.pos()
-        petSize = self.desktopPet.width()  # 假设宽高一样
-        petRect = QRect(petPos.x(), petPos.y(), petSize, petSize)
-        houseRect = self.petHouse.geometry()
-
-        if petRect.intersects(houseRect):
-            self.desktopPet.petSleep()    
-        
-        
+      
     def addCloseButton(self):
         # 不放入 layout，而是手动放置
         self.closeBtn = QPushButton("❌", self)
@@ -119,7 +90,7 @@ class MainWindow(QWidget):
     
     def addClearPoopButton(self):
         self.clearPoopBtn = QPushButton(self)
-        poopManagerPath = os.path.join(os.path.dirname(__file__), 'componentsPic', 'poopManager.png')
+        poopManagerPath = os.path.join(os.path.dirname(__file__), 'componentsPic', 'poopCleanBtn.png')
         poopManagerPixmap = QPixmap(poopManagerPath)
 
         if poopManagerPixmap.isNull():
