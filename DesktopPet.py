@@ -77,7 +77,7 @@ class DesktopPet(QWidget):
         # 立即从头播放当前动画    
         self.currentFrame = 0    
         self.animationTimer.start()
-        print(1)
+
     def initState(self):
         # 默认值
         self.defaultSpeed = 5
@@ -223,7 +223,7 @@ class DesktopPet(QWidget):
                     self.petTurn()
 
             self.move(new_x, y)
-            #print(y)
+
         self.moveTimer.timeout.connect(autoMove)
         self.moveTimer.start(10)
 
