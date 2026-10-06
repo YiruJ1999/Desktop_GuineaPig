@@ -11,8 +11,9 @@ from PoopWidget import PoopWidget
 
 class DesktopPet(QWidget):
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, direction=-1):
         super().__init__(parent)
+        self.initDirection = direction
         self.init()
 
     def init(self):
@@ -84,7 +85,7 @@ class DesktopPet(QWidget):
 
         # 初始状态：速度，睡觉，向左
         self.speed = self.defaultSpeed
-        self.direction = -1  # 提前设定方向
+        self.direction = self.initDirection  # 提前设定方向
         self.dragPosition = 0
         self.wantToPoop = False
 

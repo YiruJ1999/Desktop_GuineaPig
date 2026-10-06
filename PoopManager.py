@@ -4,9 +4,9 @@ from PySide6.QtCore import QTimer
 from PoopWidget import PoopWidget
 
 class PoopManager:
-    def __init__(self, parentWidget, desktopPet):
+    def __init__(self, parentWidget, desktopPets):
         self.parent = parentWidget
-        self.desktopPet = desktopPet
+        self.desktopPets = desktopPets
         self.poops = []
 
         # 启动定时器，每50ms检查一次
@@ -15,19 +15,21 @@ class PoopManager:
         self.timer.start(50)
 
     def checkAndAddPoop(self):
-        if self.desktopPet.wantToPoop:
+        for pet in self.desktopPets:
+            if not pet.wantToPoop:
+                continue
             # 根据方向计算 poop 的 x 坐标
-            if self.desktopPet.direction == -1:
+            if pet.direction == -1:
                 # 向左走，poop 出现在右侧屁股后
-                poop_x = self.desktopPet.x() + self.desktopPet.width() + 10
+                poop_x = pet.x() + pet.width() + 10
             else:
                 # 向右走，poop 出现在左侧屁股后
-                poop_x = self.desktopPet.x()  - 10
+                poop_x = pet.x()  - 10
 
-            poop_y = self.desktopPet.y() + self.desktopPet.height() // 2
+            poop_y = pet.y() + pet.height() // 2
 
             self.addPoop(poop_x, poop_y)
-            self.desktopPet.wantToPoop = False
+            pet.wantToPoop = False
 
     def addPoop(self, x, y):
         poop = PoopWidget(self.parent, x, y)

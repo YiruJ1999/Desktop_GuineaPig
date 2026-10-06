@@ -15,10 +15,11 @@ class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
         self.fixedHeight = 150
+        self.numPets = 2
         self.setupWindow()
         self.loadComponents()
 
-        self.poopManager = PoopManager(self, self.desktopPet)
+        self.poopManager = PoopManager(self, self.desktopPets)
         
         self.addCloseButton()
         self.addClearPoopButton()
@@ -40,10 +41,14 @@ class MainWindow(QWidget):
 
     def loadComponents(self):
         # 加载荷兰猪
-        self.desktopPet = DesktopPet(self)
-        self.desktopPet.setFixedSize(self.desktopPet.label.size())
-        self.desktopPet.raise_() 
-        self.initPetPosition() 
+        self.desktopPets = []
+        for i in range(self.numPets):
+            direction = -1 if i % 2 == 0 else 1
+            pet = DesktopPet(self, direction=direction)
+            pet.setFixedSize(pet.label.size())
+            pet.raise_()
+            self.desktopPets.append(pet)
+        self.initPetPosition()
         
         #加载猪窝
         self.petHouse = PetHouse(200, 230, x=self.width()-200, y=-10,parent=self)
@@ -61,14 +66,12 @@ class MainWindow(QWidget):
     
 
     def initPetPosition(self):
-        pet_width = self.desktopPet.width()
-        pet_height = self.desktopPet.height()
-        window_width = self.width()
-        window_height = self.height()
-        # 计算初始宠物生成位置
-        new_x = 100
-        new_y = 0
-        self.desktopPet.move(new_x, new_y)
+        # 计算初始宠物生成位置，每只间隔开
+        spacing = 200
+        for i, pet in enumerate(self.desktopPets):
+            new_x = 100 + i * spacing
+            new_y = 0
+            pet.move(new_x, new_y)
         
       
     def addCloseButton(self):
@@ -135,10 +138,12 @@ class MainWindow(QWidget):
     def timerFcn(self):
         # Pet压Carpet逻辑
         for carpet in self.carpets:
-            if carpet.x() + carpet.width > self.desktopPet.x() and carpet.x() < self.desktopPet.x() + self.desktopPet.width():
-                carpet.carpetMove(self.desktopPet.direction)
-            else:
-                carpet.carpetMove(0)
+            direction = 0
+            for pet in self.desktopPets:
+                if carpet.x() + carpet.width > pet.x() and carpet.x() < pet.x() + pet.width():
+                    direction = pet.direction
+                    break
+            carpet.carpetMove(direction)
         
     def clearPoops(self):
         for poop in self.poops:
