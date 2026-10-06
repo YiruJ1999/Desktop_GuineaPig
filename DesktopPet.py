@@ -11,9 +11,12 @@ from PoopWidget import PoopWidget
 
 class DesktopPet(QWidget):
 
-    def __init__(self, parent=None, direction=-1):
+    def __init__(self, parent=None, direction=-1, skin=None):
         super().__init__(parent)
         self.initDirection = direction
+        # skin=None 使用 frames/<status> 并水平翻转得到向右的图片
+        # skin='xxx' 使用 frames/xxx/left/<status> 和 frames/xxx/right/<status>（左右两侧花色不同）
+        self.skin = skin
         self.init()
 
     def init(self):
@@ -40,32 +43,35 @@ class DesktopPet(QWidget):
         self.imageCache = {}
 
         for status in self.allStatus:
-            folderPath = f"./frames/{status}"
-            images_left = []
-            images_right = []
-
-            if os.path.exists(folderPath):
-                for filename in sorted(os.listdir(folderPath)):
-                    if filename.endswith(".png"):
-                        pixmap = QPixmap(os.path.join(folderPath, filename))
-                        if pixmap.isNull():
-                            continue
-
-                        # 缩放原图（向左）
-                        scaled = pixmap.scaled(
-                            pixmap.width() * self.scaleFactor,
-                            pixmap.height() * self.scaleFactor,
-                            Qt.KeepAspectRatio,
-                            Qt.SmoothTransformation
-                        )
-                        images_left.append(scaled)
-
-                        # 水平翻转生成向右图片
-                        flipped = scaled.transformed(QTransform().scale(-1, 1))
-                        images_right.append(flipped)
+            if self.skin is None:
+                images_left = self.readFolder(f"./frames/{status}")
+                # 水平翻转生成向右图片
+                images_right = [img.transformed(QTransform().scale(-1, 1)) for img in images_left]
+            else:
+                images_left = self.readFolder(f"./frames/{self.skin}/left/{status}")
+                images_right = self.readFolder(f"./frames/{self.skin}/right/{status}")
 
             self.imageCache[f"{status}_l"] = images_left
             self.imageCache[f"{status}_r"] = images_right
+
+    def readFolder(self, folderPath):
+        images = []
+        if os.path.exists(folderPath):
+            for filename in sorted(os.listdir(folderPath)):
+                if filename.endswith(".png"):
+                    pixmap = QPixmap(os.path.join(folderPath, filename))
+                    if pixmap.isNull():
+                        continue
+
+                    # 缩放原图
+                    scaled = pixmap.scaled(
+                        pixmap.width() * self.scaleFactor,
+                        pixmap.height() * self.scaleFactor,
+                        Qt.KeepAspectRatio,
+                        Qt.SmoothTransformation
+                    )
+                    images.append(scaled)
+        return images
 
     def loadImage(self):
 
@@ -115,16 +121,6 @@ class DesktopPet(QWidget):
         # 定义小猪图片左上角的坐标范围
         self.ceilY = - self.petOffsetY
         self.floorY =  self.parent().height()-self.height()+ self.petOffsetY -10 #10为地毯厚度
-
-    def flipImages(self):
-        # 翻转图片，模拟掉头效果
-        flippedImages = []
-        for img in self.currentAnimation:
-            transform = QTransform().scale(-1, 1)  # 水平翻转
-            flippedImg = img.transformed(transform)
-            flippedImages.append(flippedImg)
-        self.currentAnimation = flippedImages
-        self.currentFrame = 0  # 重置帧数
 
     # Events
     def mouseReleaseEvent(self, event):
@@ -327,9 +323,14 @@ class DesktopPet(QWidget):
 
 
     def petTurn(self):
-        self.flipImages()
-        self.animationTimer.start(1)
+        # 掉头：换成另一侧的图片（左右花色可能不同，不能直接翻转当前图片）
         self.direction = -self.direction
+        if self.direction < 0:
+            self.currentAnimation = self.imageCache[f"{self.status}_l"]
+        else:
+            self.currentAnimation = self.imageCache[f"{self.status}_r"]
+        self.currentFrame = 0  # 重置帧数
+        self.animationTimer.start(1)
 
     # Animation
     def updateAnimation(self):

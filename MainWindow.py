@@ -15,7 +15,8 @@ class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
         self.fixedHeight = 150
-        self.numPets = 2
+        # 每只荷兰猪的皮肤，None 为原版，'tricolor' 为白/黑/棕三色（左右花色不同）
+        self.petSkins = [None, 'tricolor']
         self.setupWindow()
         self.loadComponents()
 
@@ -42,9 +43,9 @@ class MainWindow(QWidget):
     def loadComponents(self):
         # 加载荷兰猪
         self.desktopPets = []
-        for i in range(self.numPets):
+        for i, skin in enumerate(self.petSkins):
             direction = -1 if i % 2 == 0 else 1
-            pet = DesktopPet(self, direction=direction)
+            pet = DesktopPet(self, direction=direction, skin=skin)
             pet.setFixedSize(pet.label.size())
             pet.raise_()
             self.desktopPets.append(pet)
