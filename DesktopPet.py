@@ -137,8 +137,8 @@ class DesktopPet(QWidget):
     def mousePressEvent(self, event):
         # 点击记录dragPosition
         if event.button() == Qt.LeftButton:
-            self.dragPosition = event.globalPos() - self.frameGeometry().topLeft()
-            print("self.frameGeometry().topLeft()",self.frameGeometry().topLeft())
+            # 记录鼠标在宠物内的位置
+            self.dragPosition = event.position().toPoint()
 
     def mouseMoveEvent(self, event):
         # 拖动窗口事件，触发petDrag
@@ -146,22 +146,19 @@ class DesktopPet(QWidget):
             if self.status != 'drag':
                 self.petDrag()
 
-            parentRect = self.parent().geometry()
             petWidth = self.width()
-            petHeight = self.height() - self.petOffsetY
 
-            # 鼠标相对于父窗口的坐标
-            mouseX = event.globalPos().x()
-            mouseY = event.globalPos().y()
+            # 鼠标相对于父窗口（全屏透明窗口）的坐标
+            mousePos = self.parent().mapFromGlobal(event.globalPosition().toPoint())
 
-            newX = mouseX - self.dragPosition.x()
-            newY = mouseY - self.dragPosition.y()
+            newX = mousePos.x() - self.dragPosition.x()
+            newY = mousePos.y() - self.dragPosition.y()
             
             # 限制 X
-            if newX < parentRect.left():
-                newX = parentRect.left()
-            elif newX + petWidth > parentRect.right():
-                newX = parentRect.right() - petWidth
+            if newX < 0:
+                newX = 0
+            elif newX + petWidth > self.parent().width():
+                newX = self.parent().width() - petWidth
 
             # 限制 Y
             if newY < self.ceilY:
@@ -206,7 +203,7 @@ class DesktopPet(QWidget):
             y = self.y()
             step = speed
 
-            screenWidth = QApplication.primaryScreen().size().width()
+            screenWidth = self.parent().width()
 
             if self.direction == -1:
                 new_x = x - step

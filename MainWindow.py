@@ -14,7 +14,7 @@ from Carpet import Carpet
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
-        self.fixedHeight = 150
+        self.groundHeight = 150  # 底部地面区域（地毯、猪窝、按钮）的高度
         # 每只荷兰猪的皮肤，None 为原版，'tricolor' 为白/黑/棕三色（左右花色不同）
         self.petSkins = [None, 'tricolor']
         self.setupWindow()
@@ -31,14 +31,15 @@ class MainWindow(QWidget):
 
     def setupWindow(self):
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool)
-        self.setAttribute(Qt.WA_TranslucentBackground, False)
-        self.setFixedHeight(self.fixedHeight)
+        # 透明背景：完全透明的像素不会拦截鼠标，点击会穿透到下面的窗口
+        self.setAttribute(Qt.WA_TranslucentBackground, True)
 
-        screen = QGuiApplication.primaryScreen().geometry()
-        screen_width = screen.width()
-        screen_height = screen.height()
+        # 窗口覆盖整个屏幕（不含任务栏），这样宠物可以被拖到屏幕任意位置
+        self.setGeometry(QGuiApplication.primaryScreen().availableGeometry())
 
-        self.setGeometry(0, screen_height - self.fixedHeight - 30, screen_width, self.fixedHeight)
+    def groundTop(self):
+        # 地面区域在窗口中的顶部 y 坐标
+        return self.height() - self.groundHeight
 
     def loadComponents(self):
         # 加载荷兰猪
@@ -52,7 +53,7 @@ class MainWindow(QWidget):
         self.initPetPosition()
         
         #加载猪窝
-        self.petHouse = PetHouse(200, 230, x=self.width()-200, y=-10,parent=self)
+        self.petHouse = PetHouse(200, 230, x=self.width()-200, y=self.groundTop()-10, parent=self)
         self.petHouse.show()
         self.petHouse.lower()  
         
@@ -61,7 +62,7 @@ class MainWindow(QWidget):
         numCarpet = self.width() // carpetSize + 1
         self.carpets = []
         for i in range (numCarpet):
-            self.carpets.append(Carpet(carpetSize,carpetSize,x = i*carpetSize, y = 90  , parent=self)) #self.height() - carpetSize
+            self.carpets.append(Carpet(carpetSize,carpetSize,x = i*carpetSize, y = self.groundTop() + 90, parent=self))
             self.carpets[i].show()
             self.carpets[i].lower()
     
@@ -71,8 +72,7 @@ class MainWindow(QWidget):
         spacing = 200
         for i, pet in enumerate(self.desktopPets):
             new_x = 100 + i * spacing
-            new_y = 0
-            pet.move(new_x, new_y)
+            pet.move(new_x, pet.floorY)
         
       
     def addCloseButton(self):
@@ -92,14 +92,14 @@ class MainWindow(QWidget):
             }
         """)
         self.closeBtn.setFixedSize(30, 30)
-        self.closeBtn.move(self.width() - 40, 10)
+        self.closeBtn.move(self.width() - 40, self.groundTop() + 10)
         self.closeBtn.raise_()  # 保证在 DesktopPet 上面
         self.closeBtn.clicked.connect(QApplication.quit)
 
     def resizeEvent(self, event):
-        self.closeBtn.move(self.width() - 40, 10)
+        self.closeBtn.move(self.width() - 40, self.groundTop() + 10)
         # self.petHouse.move(self.width() - self.petHouse.width(), 0)
-        self.clearPoopBtn.move(10, 10)
+        self.clearPoopBtn.move(10, self.groundTop() + 10)
   
     
     def addClearPoopButton(self):
@@ -132,7 +132,7 @@ class MainWindow(QWidget):
             }
         """)
 
-        self.clearPoopBtn.move(10, 10)  # 左上角
+        self.clearPoopBtn.move(10, self.groundTop() + 10)  # 地面区域左上角
         self.clearPoopBtn.raise_()
         self.clearPoopBtn.clicked.connect(self.poopManager.clearPoops)
 
@@ -141,6 +141,8 @@ class MainWindow(QWidget):
         for carpet in self.carpets:
             direction = 0
             for pet in self.desktopPets:
+                if pet.y() < pet.floorY - 30:  # 宠物在空中时不压地毯
+                    continue
                 if carpet.x() + carpet.width > pet.x() and carpet.x() < pet.x() + pet.width():
                     direction = pet.direction
                     break
